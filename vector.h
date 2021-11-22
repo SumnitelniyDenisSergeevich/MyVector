@@ -4,6 +4,7 @@
 #include <new>
 #include <utility>
 #include <memory>
+#include <algorithm>
 
 template <typename T>
 class RawMemory {
@@ -148,7 +149,7 @@ public:
                 Swap(rhs_copy);
             }
             else {
-                size_t copy_size = rhs.size_ < size_ ? rhs.size_ : size_;
+                size_t copy_size = std::min(rhs.size_, size_);
                 std::copy_n(rhs.begin(), copy_size, begin());
                 if (rhs.size_ < size_) {
                     std::destroy_n(begin() + rhs.size_, size_ - rhs.size_);
@@ -212,7 +213,7 @@ public:
             new (data_ + size_) T(std::forward<Args>(args)...);
         }
         ++size_;
-        return  *(end()-1);
+        return  *(end() - 1);
     }
 
     template <typename... Args>
@@ -234,10 +235,9 @@ public:
 
     iterator Erase(const_iterator pos) noexcept(std::is_nothrow_move_assignable_v<T>) {
         auto iter = pos - begin();
-        assert(size_ != 0);
+        assert(iter < size_);
         std::move(begin() + iter + 1, end(), begin() + iter);
-        std::destroy_at(end() - 1);
-        --size_;
+        PopBack();
         return begin() + iter;
     }
 
@@ -251,8 +251,8 @@ public:
 
     void PopBack() noexcept {
         assert(size_ != 0);
-        std::destroy_at(end() - 1);
         --size_;
+        std::destroy_at(end());
     }
 
     void Swap(Vector& other) noexcept {
