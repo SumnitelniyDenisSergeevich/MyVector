@@ -219,7 +219,7 @@ public:
     template <typename... Args>
     iterator Emplace(const_iterator pos, Args&&... args) {
         auto iter = pos - begin();
-        assert(iter <= size_);
+        assert(begin() <= pos && pos <= end());
         if (pos == end()) {
             return &EmplaceBack(std::forward<Args>(args)...);
         }
@@ -235,7 +235,6 @@ public:
 
     iterator Erase(const_iterator pos) noexcept(std::is_nothrow_move_assignable_v<T>) {
         auto iter = pos - begin();
-        assert(iter < size_);
         std::move(begin() + iter + 1, end(), begin() + iter);
         PopBack();
         return begin() + iter;
